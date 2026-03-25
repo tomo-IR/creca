@@ -5,7 +5,7 @@
 
 ## システム構成
 - メールアカウント：gmail
-- メール内容読み取り、スプレッドシートへの転記等の処理：python
+- メール内容読み取り、スプレッドシートへの転記等の処理：typescript
 - 定期実行： cron,githuub Actions
 - インフラ：Docker
 
