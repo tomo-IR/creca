@@ -16,6 +16,7 @@ async function main(): Promise<void> {
 
   // Google Sheets API setup
   const serviceAccountKeyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  console.log("Using Google Service Account Key from environment variable:", !!serviceAccountKeyJson);
   const auth = serviceAccountKeyJson
     ? new google.auth.GoogleAuth({
         credentials: JSON.parse(serviceAccountKeyJson),
