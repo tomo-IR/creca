@@ -15,10 +15,16 @@ async function main(): Promise<void> {
   const sheetName = process.env.SHEET_NAME || 'Sheet1';
 
   // Google Sheets API setup
-  const auth = new google.auth.GoogleAuth({
-    keyFile: path.join(__dirname, '../credentials/service-account.json'),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
+  const serviceAccountKeyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  const auth = serviceAccountKeyJson
+    ? new google.auth.GoogleAuth({
+        credentials: JSON.parse(serviceAccountKeyJson),
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      })
+    : new google.auth.GoogleAuth({
+        keyFile: path.join(__dirname, '../credentials/service-account.json'),
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      });
 
   const sheets = google.sheets({ version: 'v4', auth });
 
