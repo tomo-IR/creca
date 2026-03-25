@@ -34,4 +34,5 @@ jobs:
     - name: Run aggregation script
       env:
         SPREADSHEET_ID: ${{ secrets.SPREADSHEET_ID }}
+        GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
       run: npm start
