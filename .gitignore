@@ -1,7 +1,5 @@
 credentials/
 *.json
-__pycache__/
-*.pyc
 node_modules/
 dist/
 .env
