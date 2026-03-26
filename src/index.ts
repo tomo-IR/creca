@@ -1,98 +1,36 @@
-import { google } from 'googleapis';
-import * as fs from 'fs';
-import * as path from 'path';
+import {
+  createGmailClient,
+  getGmailMessages,
+} from './services/gmail';
 
-async function main(): Promise<void> {
-  console.log("===== TypeScript Scheduled Run =====");
-  console.log(`timestamp: ${new Date().toISOString()}`);
+import {
+  createSheetsClient,
+  ensureSheetExists,
+  readSheetData,
+  writeSheetData,
+} from './services/sheet';
 
-  const spreadsheetId = process.env.SPREADSHEET_ID;
-  if (!spreadsheetId) {
-    console.error("Missing required environment variable SPREADSHEET_ID");
-    process.exit(1);
-  }
+import { aggregateData } from './utils/aggregate';
 
+async function main() {
+  const spreadsheetId = process.env.SPREADSHEET_ID!;
   const sheetName = process.env.SHEET_NAME || 'Sheet1';
 
-  // Google Sheets API setup
-  const serviceAccountKeyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  console.log("Using Google Service Account Key from environment variable:", !!serviceAccountKeyJson);
-  const auth = serviceAccountKeyJson
-    ? new google.auth.GoogleAuth({
-        credentials: JSON.parse(serviceAccountKeyJson),
-        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-      })
-    : new google.auth.GoogleAuth({
-        keyFile: path.join(__dirname, '../credentials/service-account.json'),
-        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-      });
+  const sheets = createSheetsClient();
+  const gmail = createGmailClient();
 
-  const sheets = google.sheets({ version: 'v4', auth });
+  await ensureSheetExists(sheets, spreadsheetId, sheetName);
 
-  try {
-    await ensureSheetExists(sheets, spreadsheetId, sheetName);
+  const [sheetData, gmailData] = await Promise.all([
+    readSheetData(sheets, spreadsheetId, sheetName),
+    getGmailMessages(gmail),
+  ]);
 
-    const data = await readSheetData(sheets, spreadsheetId, sheetName);
-    console.log('Sheet data:', data);
+  const aggregated = aggregateData(sheetData, gmailData);
 
-    const aggregated = aggregateData(data);
-    console.log('Aggregated data:', aggregated);
+  await writeSheetData(sheets, spreadsheetId, sheetName, aggregated);
 
-    await writeSheetData(sheets, spreadsheetId, sheetName, aggregated);
-    console.log('Spreadsheet operation completed successfully.');
-  } catch (error) {
-    console.error('Error:', error);
-    process.exit(1);
-  }
-}
-
-async function ensureSheetExists(sheets: any, spreadsheetId: string, sheetName: string): Promise<void> {
-  const res = await sheets.spreadsheets.get({ spreadsheetId });
-  const sheetsMetadata = res.data.sheets || [];
-  const exists = sheetsMetadata.some((sheet: any) => sheet.properties?.title === sheetName);
-
-  if (!exists) {
-    console.log(`Sheet "${sheetName}" not found. Creating...`);
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [
-          {
-            addSheet: {
-              properties: {
-                title: sheetName,
-              },
-            },
-          },
-        ],
-      },
-    });
-    console.log(`Sheet "${sheetName}" created.`);
-  }
-}
-
-async function readSheetData(sheets: any, spreadsheetId: string, sheetName: string): Promise<any[][]> {
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${sheetName}!A1:Z100`,
-  });
-  return response.data.values || [];
-}
-
-function aggregateData(data: any[][]): any[][] {
-  const count = data.length;
-  return [['Total rows:', count]];
-}
-
-async function writeSheetData(sheets: any, spreadsheetId: string, sheetName: string, data: any[][]): Promise<void> {
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: `${sheetName}!A101:B101`,
-    valueInputOption: 'RAW',
-    requestBody: {
-      values: data,
-    },
-  });
+  console.log('done 👍');
 }
 
 main();
