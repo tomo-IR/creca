@@ -25,7 +25,7 @@ async function main() {
     readSheetData(sheets, spreadsheetId, sheetName),
     getGmailMessages(gmail),
   ]);
-
+  console.log('Sheet data:', gmailData);
   const aggregated = aggregateData(sheetData, gmailData);
 
   await writeSheetData(sheets, spreadsheetId, sheetName, aggregated);
