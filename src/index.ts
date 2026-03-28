@@ -1,36 +1,37 @@
-import {
-  createGmailClient,
-  getGmailMessages,
-} from './services/gmail';
+import { createGmailClient, getGmailMessages } from "./services/gmail";
 
 import {
   createSheetsClient,
   ensureSheetExists,
   readSheetData,
   writeSheetData,
-} from './services/sheet';
-
-import { aggregateData } from './utils/aggregate';
+  getSheetName,
+} from "./services/sheet";
 
 async function main() {
   const spreadsheetId = process.env.SPREADSHEET_ID!;
-  const sheetName = process.env.SHEET_NAME || 'Sheet1';
+  const sheetName = getSheetName();
 
   const sheets = createSheetsClient();
   const gmail = createGmailClient();
 
   await ensureSheetExists(sheets, spreadsheetId, sheetName);
 
-  const [sheetData, gmailData] = await Promise.all([
-    readSheetData(sheets, spreadsheetId, sheetName),
-    getGmailMessages(gmail),
-  ]);
-  console.log('Sheet data:', gmailData);
-  const aggregated = aggregateData(sheetData, gmailData);
+  const gmailData = await getGmailMessages(gmail);
 
-  await writeSheetData(sheets, spreadsheetId, sheetName, aggregated);
+  const rows = gmailData.map((m) => {
+    return [
+      m.id,
+      m.useDate,
+      m.amount,
+      m.shop,
+      "", // 大分類（あとで分類）
+      "", // 中分類
+    ];
+  });
+  await writeSheetData(sheets, spreadsheetId, sheetName, rows);
 
-  console.log('done 👍');
+  console.log("done 👍");
 }
 
 main();

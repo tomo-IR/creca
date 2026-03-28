@@ -1,5 +1,5 @@
-import { google } from 'googleapis';
-import * as path from 'path';
+import { google } from "googleapis";
+import * as path from "path";
 
 export function createSheetsClient(): any {
   const serviceAccountKeyJson = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
@@ -7,20 +7,24 @@ export function createSheetsClient(): any {
   const auth = serviceAccountKeyJson
     ? new google.auth.GoogleAuth({
         credentials: JSON.parse(serviceAccountKeyJson),
-        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
       })
     : new google.auth.GoogleAuth({
-        keyFile: path.join(__dirname, '../../credentials/service-account.json'),
-        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+        keyFile: path.join(__dirname, "../../credentials/service-account.json"),
+        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
       });
 
-  return google.sheets({ version: 'v4', auth });
+  return google.sheets({ version: "v4", auth });
 }
 
-export async function ensureSheetExists(sheets: any, spreadsheetId: string, sheetName: string) {
+export async function ensureSheetExists(
+  sheets: any,
+  spreadsheetId: string,
+  sheetName: string,
+) {
   const res = await sheets.spreadsheets.get({ spreadsheetId });
   const exists = res.data.sheets?.some(
-    (s: any) => s.properties?.title === sheetName
+    (s: any) => s.properties?.title === sheetName,
   );
 
   if (!exists) {
@@ -31,9 +35,23 @@ export async function ensureSheetExists(sheets: any, spreadsheetId: string, shee
       },
     });
   }
+
+  // ヘッダー追加（2行目）
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${sheetName}!A2:F2`,
+    valueInputOption: "RAW",
+    requestBody: {
+      values: [["No.", "利用日", "金額", "利用先", "大分類", "中分類"]],
+    },
+  });
 }
 
-export async function readSheetData(sheets: any, spreadsheetId: string, sheetName: string) {
+export async function readSheetData(
+  sheets: any,
+  spreadsheetId: string,
+  sheetName: string,
+) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
     range: `${sheetName}!A1:Z100`,
@@ -45,12 +63,19 @@ export async function writeSheetData(
   sheets: any,
   spreadsheetId: string,
   sheetName: string,
-  data: any[][]
+  data: any[][],
 ) {
-  await sheets.spreadsheets.values.update({
+  await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `${sheetName}!A101`,
-    valueInputOption: 'RAW',
-    requestBody: { values: data },
+    range: `${sheetName}!A3`,
+    valueInputOption: "RAW",
+    requestBody: {
+      values: data,
+    },
   });
+}
+
+export function getSheetName(): string {
+  const now = new Date();
+  return `メール抽出_${now.getFullYear()}.${now.getMonth() + 1}`;
 }

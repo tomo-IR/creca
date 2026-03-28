@@ -42,8 +42,6 @@ export async function getGmailMessages(gmail: any): Promise<GmailMessage[]> {
 
   const messages = response.data.messages || [];
   const results: GmailMessage[] = [];
-  console.log(`Found ${messages.length} messages in Gmail.`);
-  console.log(JSON.stringify(messages));
 
   for (const message of messages) {
     const msg = await gmail.users.messages.get({
@@ -77,7 +75,6 @@ export async function getGmailMessages(gmail: any): Promise<GmailMessage[]> {
       shop: parsed.shop,
     });
   }
-  console.log(`Fetched ${results.length} messages from Gmail.`);
 
   return results;
 }
@@ -91,9 +88,11 @@ function parseMail(body: string) {
   const amountMatch = body.match(/利用金額[:：]\s*([\d,]+)円/);
   const shopMatch = body.match(/利用先[:：]\s*(.+)/);
 
+  const rawAmount = amountMatch?.[1] || '';
+
   return {
     date: dateMatch?.[1] || "",
-    amount: amountMatch?.[1] || "",
+    amount: rawAmount.replace(/,/g, ''), // カンマを削除して数値化しやすくする
     shop: shopMatch?.[1] || "",
   };
 }
