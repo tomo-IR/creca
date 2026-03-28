@@ -29,7 +29,7 @@ export function createGmailClient(): any {
 
 export async function getGmailMessages(gmail: any): Promise<GmailMessage[]> {
   const yesterday = new Date(Date.now());
-  yesterday.setDate(yesterday.getDate() - 2);
+  yesterday.setDate(yesterday.getDate() - 1);
 
   const after = formatDate(yesterday);
   const before = formatDate(new Date());
