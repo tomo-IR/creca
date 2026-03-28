@@ -28,8 +28,6 @@ export function createGmailClient(): any {
 }
 
 export async function getGmailMessages(gmail: any): Promise<GmailMessage[]> {
-  // const today = new Date();
-  // const dateStr = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
   const yesterday = new Date(Date.now());
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -44,6 +42,8 @@ export async function getGmailMessages(gmail: any): Promise<GmailMessage[]> {
 
   const messages = response.data.messages || [];
   const results: GmailMessage[] = [];
+  console.log(`Found ${messages.length} messages in Gmail.`);
+  console.log(JSON.stringify(messages));
 
   for (const message of messages) {
     const msg = await gmail.users.messages.get({
@@ -77,7 +77,7 @@ export async function getGmailMessages(gmail: any): Promise<GmailMessage[]> {
       shop: parsed.shop,
     });
   }
-  console.log(`Fetched ${results} messages from Gmail.`);
+  console.log(`Fetched ${results.length} messages from Gmail.`);
 
   return results;
 }
