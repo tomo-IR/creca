@@ -56,7 +56,7 @@ export async function getGmailMessages(
   const response = await gmail.users.messages.list({
     userId: "me",
     maxResults: 50,
-    q: `subject:"ご利用のお知らせ【三井住友カード】" after:${after} before:${before}`,
+    q: `subject:"ご利用のお知らせ【三井住友カード】" newer_than:2d`,
   });
 
   const messages = response.data.messages || [];
@@ -95,7 +95,11 @@ export async function getGmailMessages(
     });
   }
 
-  return results;
+  const target = targetDate.toISOString().slice(0, 10).replace(/-/g, "/");
+
+  const filtered = results.filter((m) => m.useDate === target);
+
+  return filtered;
 }
 
 function parseMail(body: string) {
