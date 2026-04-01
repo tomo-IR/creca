@@ -27,17 +27,22 @@ export function createGmailClient(): any {
   return google.gmail({ version: "v1", auth: oauth2Client });
 }
 
-export async function getGmailMessages(gmail: any): Promise<GmailMessage[]> {
+export async function getGmailMessages(
+  gmail: any,
+  targetDate: Date,
+): Promise<GmailMessage[]> {
   const yesterday = new Date(Date.now());
   yesterday.setDate(yesterday.getDate() - 1);
 
-  const after = formatDate(yesterday);
-  const before = formatDate(new Date());
+  const after = formatDate(targetDate);
+  const next = new Date(targetDate);
+  next.setDate(next.getDate() + 1);
+  const before = formatDate(next);
 
   const response = await gmail.users.messages.list({
     userId: "me",
     maxResults: 50,
-    q: `from:statement@vpass.ne.jp subject:"ご利用のお知らせ【三井住友カード】" after:${after} before:${before}`,
+   q: `from:statement@vpass.ne.jp subject:"ご利用のお知らせ【三井住友カード】" after:${after} before:${before}`,
   });
 
   const messages = response.data.messages || [];
@@ -88,11 +93,11 @@ function parseMail(body: string) {
   const amountMatch = body.match(/利用金額[:：]\s*([\d,]+)円/);
   const shopMatch = body.match(/利用先[:：]\s*(.+)/);
 
-  const rawAmount = amountMatch?.[1] || '';
+  const rawAmount = amountMatch?.[1] || "";
 
   return {
     date: dateMatch?.[1] || "",
-    amount: rawAmount.replace(/,/g, ''), // カンマを削除して数値化しやすくする
+    amount: rawAmount.replace(/,/g, ""), // カンマを削除して数値化しやすくする
     shop: shopMatch?.[1] || "",
   };
 }

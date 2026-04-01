@@ -16,8 +16,8 @@ async function main() {
   const gmail = createGmailClient();
 
   await ensureSheetExists(sheets, spreadsheetId, sheetName);
-
-  const gmailData = await getGmailMessages(gmail);
+  const targetDate = getTargetDate();
+  const gmailData = await getGmailMessages(gmail, targetDate);
 
   const rows = gmailData.map((m) => {
     return [
@@ -32,6 +32,17 @@ async function main() {
   await writeSheetData(sheets, spreadsheetId, sheetName, rows);
 
   console.log("done 👍");
+}
+function getTargetDate(): Date {
+  const input = process.env.TARGET_DATE;
+
+  if (input) {
+    return new Date(input);
+  }
+
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d;
 }
 
 main();
