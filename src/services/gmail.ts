@@ -1,6 +1,5 @@
 import { google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
-import { format } from "path";
 
 export type GmailMessage = {
   id: string;
@@ -9,7 +8,7 @@ export type GmailMessage = {
   date: string;
   body: string;
   useDate: string;
-  amount: string;
+  amount: number;
   shop: string;
 };
 
@@ -27,22 +26,37 @@ export function createGmailClient(): any {
   return google.gmail({ version: "v1", auth: oauth2Client });
 }
 
+function toEpoch(date: Date): number {
+  return Math.floor(date.getTime() / 1000);
+}
+
 export async function getGmailMessages(
   gmail: any,
   targetDate: Date,
 ): Promise<GmailMessage[]> {
-  const yesterday = new Date(Date.now());
-  yesterday.setDate(yesterday.getDate() - 1);
+  const start = new Date(
+    Date.UTC(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      targetDate.getDate(),
+    ),
+  );
 
-  const after = formatDate(targetDate);
-  const next = new Date(targetDate);
-  next.setDate(next.getDate() + 1);
-  const before = formatDate(next);
+  const end = new Date(
+    Date.UTC(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      targetDate.getDate() + 1,
+    ),
+  );
+
+  const after = toEpoch(start);
+  const before = toEpoch(end);
 
   const response = await gmail.users.messages.list({
     userId: "me",
     maxResults: 50,
-   q: `from:statement@vpass.ne.jp subject:"ご利用のお知らせ【三井住友カード】" after:${after} before:${before}`,
+    q: `subject:"ご利用のお知らせ【三井住友カード】" after:${after} before:${before}`,
   });
 
   const messages = response.data.messages || [];
@@ -76,16 +90,12 @@ export async function getGmailMessages(
       date: payload.headers?.find((h) => h.name === "Date")?.value || "",
       body,
       useDate: parsed.date,
-      amount: parsed.amount,
+      amount: Number(parsed.amount),
       shop: parsed.shop,
     });
   }
 
   return results;
-}
-
-function formatDate(date: Date): string {
-  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}`;
 }
 
 function parseMail(body: string) {
