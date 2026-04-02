@@ -26,32 +26,10 @@ export function createGmailClient(): any {
   return google.gmail({ version: "v1", auth: oauth2Client });
 }
 
-function toEpoch(date: Date): number {
-  return Math.floor(date.getTime() / 1000);
-}
-
 export async function getGmailMessages(
   gmail: any,
   targetDate: Date,
 ): Promise<GmailMessage[]> {
-  const start = new Date(
-    Date.UTC(
-      targetDate.getFullYear(),
-      targetDate.getMonth(),
-      targetDate.getDate(),
-    ),
-  );
-
-  const end = new Date(
-    Date.UTC(
-      targetDate.getFullYear(),
-      targetDate.getMonth(),
-      targetDate.getDate() + 1,
-    ),
-  );
-
-  const after = toEpoch(start);
-  const before = toEpoch(end);
 
   const response = await gmail.users.messages.list({
     userId: "me",

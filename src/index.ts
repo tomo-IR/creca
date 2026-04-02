@@ -2,20 +2,16 @@ import { createGmailClient, getGmailMessages } from "./services/gmail";
 
 import {
   createSheetsClient,
-  ensureSheetExists,
-  readSheetData,
   writeSheetData,
-  getSheetName,
 } from "./services/sheet";
 
 async function main() {
   const spreadsheetId = process.env.SPREADSHEET_ID!;
-  const sheetName = getSheetName();
+  const sheetName = "メール抽出"
 
   const sheets = createSheetsClient();
   const gmail = createGmailClient();
 
-  await ensureSheetExists(sheets, spreadsheetId, sheetName);
   const targetDate = getTargetDate();
   const gmailData = await getGmailMessages(gmail, targetDate);
 

@@ -17,36 +17,6 @@ export function createSheetsClient(): any {
   return google.sheets({ version: "v4", auth });
 }
 
-export async function ensureSheetExists(
-  sheets: any,
-  spreadsheetId: string,
-  sheetName: string,
-) {
-  const res = await sheets.spreadsheets.get({ spreadsheetId });
-  const exists = res.data.sheets?.some(
-    (s: any) => s.properties?.title === sheetName,
-  );
-
-  if (!exists) {
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [{ addSheet: { properties: { title: sheetName } } }],
-      },
-    });
-  }
-
-  // ヘッダー追加（2行目）
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: `${sheetName}!A2:F2`,
-    valueInputOption: "RAW",
-    requestBody: {
-      values: [["No.", "利用日", "金額", "利用先", "大分類", "中分類"]],
-    },
-  });
-}
-
 export async function readSheetData(
   sheets: any,
   spreadsheetId: string,
@@ -73,9 +43,4 @@ export async function writeSheetData(
       values: data,
     },
   });
-}
-
-export function getSheetName(): string {
-  const now = new Date();
-  return `メール抽出_${now.getFullYear()}.${now.getMonth() + 1}`;
 }
