@@ -30,12 +30,9 @@ export async function getGmailMessages(
   gmail: any,
   targetDate: Date,
 ): Promise<GmailMessage[]> {
-  const start = new Date(targetDate);
-  const end = new Date(targetDate);
-  end.setDate(end.getDate() + 1);
-
-  const after = toEpoch(start);
-  const before = toEpoch(end);
+  const { startUTC, endUTC } = createJSTRange(targetDate);
+  const after = toEpoch(startUTC);
+  const before = toEpoch(endUTC);
   console.log(`検索クエリ: after:${after} before:${before}`);
   const response = await gmail.users.messages.list({
     userId: "me",
@@ -78,12 +75,7 @@ export async function getGmailMessages(
       shop: parsed.shop,
     });
   }
-  const target = formatTargetDate(targetDate);
 
-  const filtered = results.filter((m) => {
-    const received = formatDateJST(m.date);
-    return received === target;
-  });
   return results;
 }
 
@@ -113,4 +105,18 @@ function formatTargetDate(date: Date): string {
 
 function toEpoch(date: Date): number {
   return Math.floor(date.getTime() / 1000);
+}
+
+function createJSTRange(date: Date) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  // JST → UTCに変換
+  const startUTC = new Date(start.getTime() - 9 * 60 * 60 * 1000);
+  const endUTC = new Date(end.getTime() - 9 * 60 * 60 * 1000);
+
+  return { startUTC, endUTC };
 }
