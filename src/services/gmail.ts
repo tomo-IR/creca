@@ -30,11 +30,16 @@ export async function getGmailMessages(
   gmail: any,
   targetDate: Date,
 ): Promise<GmailMessage[]> {
+  const start = new Date(targetDate);
+  const end = new Date(targetDate);
+  end.setDate(end.getDate() + 1);
 
+  const after = toEpoch(start);
+  const before = toEpoch(end);
   const response = await gmail.users.messages.list({
     userId: "me",
     maxResults: 50,
-    q: `subject:"ご利用のお知らせ【三井住友カード】" newer_than:2d`,
+    q: `subject:"ご利用のお知らせ【三井住友カード】" after:${after} before:${before}`,
   });
 
   const messages = response.data.messages || [];
@@ -67,17 +72,18 @@ export async function getGmailMessages(
       from: payload.headers?.find((h) => h.name === "From")?.value || "",
       date: payload.headers?.find((h) => h.name === "Date")?.value || "",
       body,
-      useDate: parsed.date,
+      useDate: parsed.date.slice(0, 10).replace(/-/g, "/"),
       amount: Number(parsed.amount),
       shop: parsed.shop,
     });
   }
+  const target = formatTargetDate(targetDate);
 
-  const target = targetDate.toISOString().slice(0, 10).replace(/-/g, "/");
-
-  const filtered = results.filter((m) => m.useDate === target);
-
-  return filtered;
+  const filtered = results.filter((m) => {
+    const received = formatDateJST(m.date);
+    return received === target;
+  });
+  return results;
 }
 
 function parseMail(body: string) {
@@ -92,4 +98,18 @@ function parseMail(body: string) {
     amount: rawAmount.replace(/,/g, ""), // カンマを削除して数値化しやすくする
     shop: shopMatch?.[1] || "",
   };
+}
+
+function formatDateJST(dateStr: string): string {
+  const d = new Date(dateStr);
+  const jst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  return jst.toISOString().slice(0, 10);
+}
+
+function formatTargetDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function toEpoch(date: Date): number {
+  return Math.floor(date.getTime() / 1000);
 }

@@ -1,13 +1,10 @@
 import { createGmailClient, getGmailMessages } from "./services/gmail";
 
-import {
-  createSheetsClient,
-  writeSheetData,
-} from "./services/sheet";
+import { createSheetsClient, writeSheetData } from "./services/sheet";
 
 async function main() {
   const spreadsheetId = process.env.SPREADSHEET_ID!;
-  const sheetName = "メール抽出"
+  const sheetName = "メール抽出";
 
   const sheets = createSheetsClient();
   const gmail = createGmailClient();
@@ -33,12 +30,19 @@ function getTargetDate(): Date {
   const input = process.env.TARGET_DATE;
 
   if (input) {
-    return new Date(input);
+    const d = new Date(input);
+    return new Date(d.getTime() + 9 * 60 * 60 * 1000);
   }
 
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d;
+  const now = new Date();
+
+  // JSTに変換
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+
+  // 前日
+  jst.setDate(jst.getDate() - 1);
+
+  return jst;
 }
 
 main();
