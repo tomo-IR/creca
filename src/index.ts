@@ -28,6 +28,7 @@ async function main() {
 }
 function getTargetDate(): Date {
   const input = process.env.TARGET_DATE;
+  console.log(`input: ${input}`);
 
   if (input) {
     const d = new Date(input);

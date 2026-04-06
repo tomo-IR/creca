@@ -36,6 +36,7 @@ export async function getGmailMessages(
 
   const after = toEpoch(start);
   const before = toEpoch(end);
+  console.log(`検索クエリ: after:${after} before:${before}`);
   const response = await gmail.users.messages.list({
     userId: "me",
     maxResults: 50,
