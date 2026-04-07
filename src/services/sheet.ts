@@ -35,12 +35,24 @@ export async function writeSheetData(
   sheetName: string,
   data: any[][],
 ) {
+  const sheetData = await readSheetData(sheets, spreadsheetId, sheetName);
+  const existingIds = sheetData
+    .filter((row) => Array.isArray(row) && row.length > 0)
+    .filter((row) => row[0] !== "No.")
+    .map((row) => row[0]);
+
+
+  const filteredData = data.filter((row) => {
+    const rowString = row[0];
+    return !existingIds.includes(rowString);
+  });
+
   await sheets.spreadsheets.values.append({
     spreadsheetId,
     range: `${sheetName}!A3`,
     valueInputOption: "RAW",
     requestBody: {
-      values: data,
+      values: filteredData,
     },
   });
 }
